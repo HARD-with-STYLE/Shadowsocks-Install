@@ -1,52 +1,50 @@
 #!/usr/bin/env bash
-
-# 脚本制作:  cx9208   Licensed: GPLv3
+# Original Author:  cx9208   Licensed: GPLv3
 # Thanks:
 # @cx9208  <https://github.com/cx9208>
 
 kernel_version="4.14.129-bbrplus"
 if [[ ! -f /etc/redhat-release ]]; then
-	echo -e "仅支持centos"
+	echo -e "Only support centos..."
 	exit 0
 fi
 
 if [[ "$(uname -r)" == "${kernel_version}" ]]; then
-	echo -e "内核已经安装，无需重复执行。"
+	echo -e "Kernel has been installed..."
 	exit 0
 fi
 
-#卸载原加速
-echo -e "卸载加速..."
+echo -e "Uninstalling lotServer..."
 sed -i '/net.core.default_qdisc/d' /etc/sysctl.conf
 sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf
 if [[ -e /appex/bin/serverSpeeder.sh ]]; then
-	wget --no-check-certificate -O appex.sh https://raw.githubusercontent.com/0oVicero0/serverSpeeder_Install/master/appex.sh && chmod +x appex.sh && bash appex.sh uninstall
+	wget --no-check-certificate -O appex.sh https://raw.githubusercontent.com/MoeClub/lotServer/master/Install.sh && chmod +x appex.sh && bash appex.sh uninstall
 	rm -f appex.sh
 fi
-echo -e "下载内核..."
+echo -e "Downloading Kernel..."
 wget --no-check-certificate https://github.com/Yuk1n0/Shadowsocks-Install/raw/master/Centos7/x86_64/kernel-${kernel_version}.rpm
-echo -e "安装内核..."
+echo -e "Installing Kernel..."
 yum install -y kernel-${kernel_version}.rpm
 
-#检查内核是否安装成功
+#Check
 list="$(awk -F\' '$1=="menuentry " {print i++ " : " $2}' /etc/grub2.cfg)"
 target="CentOS Linux (${kernel_version})"
 result=$(echo $list | grep "${target}")
 if [[ "$result" == "" ]]; then
-	echo -e "内核安装失败"
+	echo -e "Failed to install bbrplus..."
 	exit 1
 fi
 
-echo -e "切换内核..."
+echo -e "Switching to new bbrplus-kernel..."
 grub2-set-default 'CentOS Linux (${kernel_version}) 7 (Core)'
-echo -e "启用模块..."
+echo -e "Enable bbr module..."
 echo "net.core.default_qdisc=fq" >>/etc/sysctl.conf
 echo "net.ipv4.tcp_congestion_control=bbrplus" >>/etc/sysctl.conf
 rm -f kernel-${kernel_version}.rpm
 
-read -p "bbrplus安装完成，现在重启 ? [Y/n] :" yn
-[ -z "${yn}" ] && yn="y"
-if [[ $yn == [Yy] ]]; then
-	echo -e "重启中..."
+read -p "bbrplus installation completed，reboot server now ? [Y/n] :" answer
+[ -z "${answer}" ] && answer="y"
+if [[ $answer == [Yy] ]]; then
+	echo -e "Rebooting..."
 	reboot
 fi
