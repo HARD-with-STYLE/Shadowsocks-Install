@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
+#
 # Original Author:  cx9208   Licensed: GPLv3
 # Thanks:
 # @cx9208  <https://github.com/cx9208>
 
-kernel_version="4.14.129-bbrplus"
+kernel_version="4.14.151"
 if [[ ! -f /etc/redhat-release ]]; then
 	echo -e "Only support centos..."
 	exit 0

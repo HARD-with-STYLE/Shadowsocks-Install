@@ -9,20 +9,20 @@
 ```bash
 wget --no-check-certificate https://raw.githubusercontent.com/Yuk1n0/Shadowsocks-Install/master/bbrplus_centos.sh && chmod +x bbrplus_centos.sh && ./bbrplus_centos.sh
 ```
-安装后，执行uname -r，显示4.14.129-bbrplus则切换内核成功  
-执行lsmod | grep bbr，显示有bbrplus则开启成功   
+安装后，执行uname -r，显示4.14.151则切换内核成功  
+执行lsmod | grep bbr，显示有tcp_bbrplus则开启成功   
 
 ## 手动安装方法：  
 1.  卸载本机的锐速（如果有）  
 
 2.  下载内核  
-wget --no-check-certificate https://github.com/Yuk1n0/Shadowsocks-Install/raw/master/Centos7/x86_64/kernel-4.14.129-bbrplus.rpm
+wget --no-check-certificate https://github.com/Yuk1n0/Shadowsocks-Install/raw/master/Centos7/x86_64/kernel-4.14.151.rpm
 
 3.  安装内核  
-yum install -y kernel-4.14.129-bbrplus.rpm  
+yum install -y kernel-4.14.151.rpm  
 
 4.  切换启动内核  
-grub2-set-default 'CentOS Linux (4.14.129-bbrplus) 7 (Core)'  
+grub2-set-default 'CentOS Linux (4.14.151) 7 (Core)'  
 
 5.  设置fq  
 echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf  
@@ -33,7 +33,7 @@ echo "net.ipv4.tcp_congestion_control=bbrplus" >> /etc/sysctl.conf
 reboot  
 
 7.  检查内核版本  uname -r  
-显示4.14.129-bbrplus则成功  
+显示4.14.151则成功  
 
 8.  检查bbrplus是否已经启动  
 lsmod | grep bbrplus  显示有tcp_bbrplus则成功  
