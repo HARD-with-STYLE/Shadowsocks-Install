@@ -3,7 +3,7 @@
 # Original Author:  cx9208 <https://github.com/cx9208>  Licensed: GPLv3
 # Copyright (C) 2019 Yuk1n0
 
-kernel_version="4.14.151"
+kernel_version="4.14.154"
 if [[ ! -f /etc/redhat-release ]]; then
 	echo -e "Only support Centos..."
 	exit 0
@@ -42,7 +42,6 @@ grub2-set-default 'CentOS Linux (${kernel_version}) 7 (Core)'
 echo -e "Enable bbr module..."
 echo "net.core.default_qdisc=fq" >>/etc/sysctl.conf
 echo "net.ipv4.tcp_congestion_control=bbrplus" >>/etc/sysctl.conf
-sysctl -p
 rm -f kernel-${kernel_version}.rpm
 
 while true; do
