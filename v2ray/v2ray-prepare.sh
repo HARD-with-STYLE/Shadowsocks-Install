@@ -21,12 +21,12 @@ cur_dir=$(pwd)
 [[ $EUID -ne 0 ]] && echo -e "[${red}Error${plain}] This script must be run as root!" && exit 1
 
 disable_selinux() {
-    echo -e "[${green}Info${plain}] This step will make selinux disabled (if selinux existed)..."
-    echo
+    echo -e "[${yellow}Step${plain}] This step will make selinux disabled (if selinux existed)..."
     if [ -s /etc/selinux/config ] && grep 'SELINUX=enforcing' /etc/selinux/config; then
         sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
         setenforce 0
     fi
+    echo
 }
 
 check_sys() {
@@ -119,8 +119,7 @@ error_detect_depends() {
 }
 
 config_firewall() {
-    echo -e "[${green}Info${plain}] This step will config your firewall..."
-    echo
+    echo -e "[${yellow}Step${plain}] This step will config your firewall..."
     if centosversion 6; then
         /etc/init.d/iptables status >/dev/null 2>&1
         if [ $? -eq 0 ]; then
@@ -148,11 +147,11 @@ config_firewall() {
             echo -e "[${yellow}Warning${plain}] firewalld looks like not running or not installed, please enable port ${shadowsocksport} manually if necessary."
         fi
     fi
+    echo
 }
 
 install_epel() {
-    echo -e "[${green}Info${plain}] This step will enable EPEL repository (centos) ,and update your system..."
-    echo
+    echo -e "[${yellow}Step${plain}] This step will enable EPEL repository (centos) and update your system..."
     if check_sys packageManager yum; then
         echo -e "[${green}Info${plain}] Checking the EPEL repository..."
         if [ ! -f /etc/yum.repos.d/epel.repo ]; then
@@ -167,11 +166,11 @@ install_epel() {
     elif check_sys packageManager apt; then
         apt-get -y update
     fi
+    echo
 }
 
 install_useful_package() {
-    echo -e "[${green}Info${plain}] This step will install some packages that installation needed..."
-    echo
+    echo -e "[${yellow}Step${plain}] This step will install some packages that installation needed..."
     if check_sys packageManager yum; then
         yum_depends=(
             unzip ufw certbot bind-utils traceroute htop bash-completion
@@ -187,11 +186,11 @@ install_useful_package() {
             error_detect_depends "apt-get -y install ${depend}"
         done
     fi
+    echo
 }
 
 disable_unuseful_services() {
-    echo -e "[${green}Info${plain}] This step will disable some unuseful autostart services..."
-    echo
+    echo -e "[${yellow}Step${plain}] This step will disable some unuseful autostart services..."
     if centosversion 7; then
         systemctl stop kdump
         systemctl disable kdump
@@ -205,12 +204,12 @@ disable_unuseful_services() {
         systemctl stop postfix
         systemctl disable postfix
     fi
+    echo
 }
 
 prepare_domain() {
+    echo -e "[${yellow}Step${plain}] This step will get a cert for your OWN domain..."
     echo -e "[${yellow}Warning${plain}] To use v2ray-websocket-tls, make sure you have at least ONE domain ,or you can buy one at https://www.godaddy.com"
-    echo -e "[${green}Info${plain}] This step will get a cert for your OWN domain..."
-    echo
     read -p "Please enter your own domain: " domain
     str=$(echo $domain | gawk '/^([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$/{print $0}')
     while [ ! -n "${str}" ]; do
@@ -220,13 +219,14 @@ prepare_domain() {
     done
     echo -e "Your domain = ${domain}"
     get_cert
+    echo
 }
 
 get_cert() {
     if [ -f /etc/letsencrypt/live/$domain/fullchain.pem ]; then
-        echo -e "[${green}Info${plain}] Cert already got, skip..."
+        echo -e "[${green}Step${plain}] Cert already got, skip..."
     else
-        certbot certonly --cert-name $domain -d $domain --standalone --agree-tos --register-unsafely-without-email
+        certbot certonly --cert-name $domain -d $domain -d www.$domain --standalone --agree-tos --register-unsafely-without-email
         systemctl enable certbot-renew.timer
         systemctl start certbot-renew.timer
         if [ ! -f /etc/letsencrypt/live/$domain/fullchain.pem ]; then
@@ -237,8 +237,7 @@ get_cert() {
 }
 
 install_bbrplus() {
-    echo -e "[${green}Info${plain}] This step will install bbrplus kernel to your host..."
-    echo
+    echo -e "[${yellow}Step${plain}] This step will install bbrplus kernel to your host..."
     kernel_version="4.14.154"
     if [[ ! -f /etc/redhat-release ]]; then
         echo -e "Only support Centos..."
@@ -298,19 +297,19 @@ install_main() {
         echo "Please change to CentOS 6+/Debian 7+/Ubuntu 12+ and try again."
         exit 1
     fi
-    echo "Press any key to start...or Press Ctrl+C to cancel"
+    echo -e "[${green}Info${plain}] Press any key to start...or Press Ctrl+C to cancel"
     char=$(get_char)
-
-    disable_selinux
+    echo
     install_epel
+    disable_selinux
     install_useful_package
     disable_unuseful_services
     if check_sys packageManager yum; then
         config_firewall
     fi
     prepare_domain
-    echo "alias netports='sudo netstat -anp | grep -E \"Recv-Q | tcp | udp | raw\"'" >>/root/.bashrc
-    echo "Press any key to start...or Press Ctrl+C to cancel"
+    echo "alias netports='sudo netstat -anp | grep -E \"Recv-Q|tcp|udp|raw\"'" >>/root/.bashrc
+    echo "Press any key to continue...or Press Ctrl+C to cancel"
     char=$(get_char)
     install_bbrplus
 
