@@ -6,7 +6,7 @@ export PATH
 #
 # Copyright (C) 2019-2020 Yuk1n0
 #
-# System Required:  CentOS 6+, Debian7+, Ubuntu12+ (CentOS 7 is Recommedned)
+# System Required:  CentOS 7
 #
 # Reference URL:
 # https://github.com/v2ray
@@ -16,7 +16,6 @@ red='\033[0;31m'
 green='\033[0;32m'
 yellow='\033[0;33m'
 plain='\033[0m'
-cur_dir=$(pwd)
 
 [[ $EUID -ne 0 ]] && echo -e "[${red}Error${plain}] This script must be run as root!" && exit 1
 
@@ -120,32 +119,15 @@ error_detect_depends() {
 
 config_firewall() {
     echo -e "[${yellow}Step${plain}] This step will config your firewall..."
-    if centosversion 6; then
-        /etc/init.d/iptables status >/dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            iptables -L -n | grep -i ${shadowsocksport} >/dev/null 2>&1
-            if [ $? -ne 0 ]; then
-                iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport 443 -j ACCEPT
-                iptables -I INPUT -m state --state NEW -m udp -p udp --dport 443 -j ACCEPT
-                /etc/init.d/iptables save
-                /etc/init.d/iptables restart
-            else
-                echo -e "[${green}Info${plain}] port ${green}${shadowsocksport}${plain} already be enabled."
-            fi
-        else
-            echo -e "[${yellow}Warning${plain}] iptables looks like not running or not installed, please enable port ${shadowsocksport} manually if necessary."
-        fi
-    elif centosversion 7; then
-        systemctl status firewalld >/dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            default_zone=$(firewall-cmd --get-default-zone)
-            firewall-cmd --permanent --zone=${default_zone} --add-service=http
-            firewall-cmd --permanent --zone=${default_zone} --add-port=443/tcp
-            firewall-cmd --permanent --zone=${default_zone} --add-port=443/udp
-            firewall-cmd --reload
-        else
-            echo -e "[${yellow}Warning${plain}] firewalld looks like not running or not installed, please enable port ${shadowsocksport} manually if necessary."
-        fi
+    systemctl status firewalld >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        default_zone=$(firewall-cmd --get-default-zone)
+        firewall-cmd --permanent --zone=${default_zone} --add-service=http
+        firewall-cmd --permanent --zone=${default_zone} --add-port=443/tcp
+        firewall-cmd --permanent --zone=${default_zone} --add-port=443/udp
+        firewall-cmd --reload
+    else
+        echo -e "[${yellow}Warning${plain}] firewalld looks like not running or not installed, please enable port ${shadowsocksport} manually if necessary."
     fi
     echo
 }
@@ -173,17 +155,10 @@ install_useful_package() {
     echo -e "[${yellow}Step${plain}] This step will install some packages that installation needed..."
     if check_sys packageManager yum; then
         yum_depends=(
-            unzip ufw certbot bind-utils traceroute htop bash-completion
+            ufw certbot bind-utils traceroute bash-completion
         )
         for depend in ${yum_depends[@]}; do
             error_detect_depends "yum -y install ${depend}"
-        done
-    elif check_sys packageManager apt; then
-        apt_depends=(
-            unzip ufw certbot dnsutils traceroute htop bash-completion
-        )
-        for depend in ${apt_depends[@]}; do
-            error_detect_depends "apt-get -y install ${depend}"
         done
     fi
     echo
@@ -191,19 +166,12 @@ install_useful_package() {
 
 disable_unuseful_services() {
     echo -e "[${yellow}Step${plain}] This step will disable some unuseful autostart services..."
-    if centosversion 7; then
-        systemctl stop kdump
-        systemctl disable kdump
-        systemctl stop NetworkManager-wait-online
-        systemctl disable NetworkManager-wait-online
-        systemctl stop postfix
-        systemctl disable postfix
-    elif check_sys packageManager apt; then
-        systemctl stop NetworkManager-wait-online
-        systemctl disable NetworkManager-wait-online
-        systemctl stop postfix
-        systemctl disable postfix
-    fi
+    systemctl stop kdump
+    systemctl disable kdump
+    systemctl stop NetworkManager-wait-online
+    systemctl disable NetworkManager-wait-online
+    systemctl stop postfix
+    systemctl disable postfix
     echo
 }
 
@@ -281,8 +249,8 @@ install_bbrplus() {
 }
 
 install_check() {
-    if check_sys packageManager yum || check_sys packageManager apt; then
-        if centosversion 5; then
+    if check_sys packageManager yum; then
+        if centosversion 5 || centosversion 6; then
             return 1
         fi
         return 0
@@ -294,7 +262,7 @@ install_check() {
 install_main() {
     if ! install_check; then
         echo -e "[${red}Error${plain}] Your OS is not supported to run it!"
-        echo "Please change to CentOS 6+/Debian 7+/Ubuntu 12+ and try again."
+        echo "Please change to CentOS 7 and try again."
         exit 1
     fi
     echo -e "[${green}Info${plain}] Press any key to start...or Press Ctrl+C to cancel"
@@ -304,9 +272,7 @@ install_main() {
     disable_selinux
     install_useful_package
     disable_unuseful_services
-    if check_sys packageManager yum; then
-        config_firewall
-    fi
+    config_firewall
     prepare_domain
     echo "alias netports='sudo netstat -anp | grep -E \"Recv-Q|tcp|udp|raw\"'" >>/root/.bashrc
     echo "Press any key to continue...or Press Ctrl+C to cancel"
