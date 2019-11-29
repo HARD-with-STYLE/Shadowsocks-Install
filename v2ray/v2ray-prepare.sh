@@ -16,11 +16,12 @@ red='\033[0;31m'
 green='\033[0;32m'
 yellow='\033[0;33m'
 plain='\033[0m'
+kernel_version="4.19.154"
 
 [[ $EUID -ne 0 ]] && echo -e "[${red}Error${plain}] This script must be run as root!" && exit 1
 
 disable_selinux() {
-    echo -e "[${yellow}Step${plain}] This step will make selinux disabled (if selinux existed)..."
+    echo -e "[${yellow}Step${plain}] This step will make SELinux disabled (if SELinux existed)..."
     if [ -s /etc/selinux/config ] && grep 'SELINUX=enforcing' /etc/selinux/config; then
         sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
         setenforce 0
@@ -127,40 +128,33 @@ config_firewall() {
         firewall-cmd --permanent --zone=${default_zone} --add-port=443/udp
         firewall-cmd --reload
     else
-        echo -e "[${yellow}Warning${plain}] firewalld looks like not running or not installed, please enable port ${shadowsocksport} manually if necessary."
+        echo -e "[${yellow}Warning${plain}] firewalld looks like not running or not installed, please enable port 80/443 manually if necessary."
     fi
     echo
 }
 
 install_epel() {
-    echo -e "[${yellow}Step${plain}] This step will enable EPEL repository (centos) and update your system..."
-    if check_sys packageManager yum; then
-        echo -e "[${green}Info${plain}] Checking the EPEL repository..."
-        if [ ! -f /etc/yum.repos.d/epel.repo ]; then
-            yum install -y epel-release >/dev/null 2>&1
-        fi
-        [ ! -f /etc/yum.repos.d/epel.repo ] && echo -e "[${red}Error${plain}] Install EPEL repository failed, please check it." && exit 1
-        [ ! "$(command -v yum-config-manager)" ] && yum install -y yum-utils >/dev/null 2>&1
-        [ x"$(yum-config-manager epel | grep -w enabled | awk '{print $3}')" != x"True" ] && yum-config-manager --enable epel >/dev/null 2>&1
-        yum -y update
-        echo -e "[${green}Info${plain}] Checking the EPEL repository complete..."
-
-    elif check_sys packageManager apt; then
-        apt-get -y update
+    echo -e "[${yellow}Step${plain}] This step will enable EPEL repository (centos) and update your system again..."
+    echo -e "[${green}Info${plain}] Checking the EPEL repository..."
+    if [ ! -f /etc/yum.repos.d/epel.repo ]; then
+        yum install -y epel-release >/dev/null 2>&1
     fi
+    [ ! -f /etc/yum.repos.d/epel.repo ] && echo -e "[${red}Error${plain}] Install EPEL repository failed, please check it." && exit 1
+    [ ! "$(command -v yum-config-manager)" ] && yum install -y yum-utils >/dev/null 2>&1
+    [ x"$(yum-config-manager epel | grep -w enabled | awk '{print $3}')" != x"True" ] && yum-config-manager --enable epel >/dev/null 2>&1
+    yum -y update
+    echo -e "[${green}Info${plain}] Checking the EPEL repository complete..."
     echo
 }
 
 install_useful_package() {
     echo -e "[${yellow}Step${plain}] This step will install some packages that installation needed..."
-    if check_sys packageManager yum; then
-        yum_depends=(
-            ufw certbot bind-utils traceroute bash-completion
-        )
-        for depend in ${yum_depends[@]}; do
-            error_detect_depends "yum -y install ${depend}"
-        done
-    fi
+    yum_depends=(
+        ufw certbot bind-utils traceroute bash-completion
+    )
+    for depend in ${yum_depends[@]}; do
+        error_detect_depends "yum -y install ${depend}"
+    done
     echo
 }
 
@@ -206,18 +200,16 @@ get_cert() {
 
 install_bbrplus() {
     echo -e "[${yellow}Step${plain}] This step will install bbrplus kernel to your host..."
-    kernel_version="4.14.154"
     if [[ ! -f /etc/redhat-release ]]; then
         echo -e "Only support Centos..."
         exit 0
     fi
 
-    if [[ "$(uname -r)" == "${kernel_version}" ]]; then
-        echo -e "Kernel has been installed..."
-        exit 0
-    fi
+    echo "Updating your system ,please wait a few minutes..."
+    yum -y update
+    echo "Updating system complete..."
 
-    echo -e "Checking lotServer..."
+    echo "Checking lotServer..."
     sed -i '/net.core.default_qdisc/d' /etc/sysctl.conf
     sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf
     if [[ -e /appex/bin/lotServer.sh ]]; then
@@ -225,10 +217,11 @@ install_bbrplus() {
         wget --no-check-certificate -O appex.sh https://raw.githubusercontent.com/MoeClub/lotServer/master/Install.sh && chmod +x appex.sh && bash appex.sh uninstall
         rm -f appex.sh
     fi
+    echo "Checking lotServer complete..."
 
-    echo -e "Downloading Kernel..."
+    echo "Downloading bbrplus Kernel..."
     wget --no-check-certificate https://github.com/Yuk1n0/Shadowsocks-Install/raw/master/Centos7/x86_64/kernel-${kernel_version}.rpm
-    echo -e "Installing Kernel..."
+    echo "Installing bbrplus Kernel..."
     yum install -y kernel-${kernel_version}.rpm
 
     #Check
@@ -236,13 +229,13 @@ install_bbrplus() {
     target="CentOS Linux (${kernel_version})"
     result=$(echo $list | grep "${target}")
     if [[ "$result" == "" ]]; then
-        echo -e "Failed to install bbrplus..."
+        echo "Failed to install bbrplus..."
         exit 1
     fi
 
-    echo -e "Switching to new bbrplus-kernel..."
+    echo "Switching to new bbrplus-kernel..."
     grub2-set-default 'CentOS Linux (${kernel_version}) 7 (Core)'
-    echo -e "Enable bbr module..."
+    echo "Enable bbr module..."
     echo "net.core.default_qdisc=fq" >>/etc/sysctl.conf
     echo "net.ipv4.tcp_congestion_control=bbrplus" >>/etc/sysctl.conf
     rm -f kernel-${kernel_version}.rpm
@@ -268,6 +261,11 @@ install_main() {
     echo -e "[${green}Info${plain}] Press any key to start...or Press Ctrl+C to cancel"
     char=$(get_char)
     echo
+    if [[ "$(uname -r)" == "${kernel_version}" ]]; then
+        echo "bbrplus kernel has been installed..."
+    else
+        install_bbrplus
+    fi
     install_epel
     disable_selinux
     install_useful_package
@@ -275,18 +273,15 @@ install_main() {
     config_firewall
     prepare_domain
     echo "alias netports='sudo netstat -anp | grep -E \"Recv-Q|tcp|udp|raw\"'" >>/root/.bashrc
-    echo "Press any key to continue...or Press Ctrl+C to cancel"
-    char=$(get_char)
-    install_bbrplus
 
     while true; do
         read -p "prepare installation completed，reboot server now ? [Y/n] :" answer
         [ -z "${answer}" ] && answer="y"
         if [[ $answer == [Yy] ]]; then
-            echo -e "Rebooting..."
+            echo "Rebooting..."
             break
         else
-            echo -e "Error, you should choose [Y/n] !"
+            echo "Error, you should choose [Y/n] !"
             echo
         fi
     done
