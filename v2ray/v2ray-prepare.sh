@@ -200,42 +200,39 @@ get_cert() {
 
 install_bbrplus() {
     echo -e "[${yellow}Step${plain}] This step will install bbrplus kernel to your host..."
-    if [[ ! -f /etc/redhat-release ]]; then
-        echo -e "Only support Centos..."
-        exit 0
-    fi
 
-    echo "Updating your system ,please wait a few minutes..."
+    echo -e "[${green}Info${plain}] Updating your system ,please wait a few minutes..."
     yum -y update
-    echo "Updating system complete..."
+    echo -e "[${green}Info${plain}] Updating system complete..."
 
-    echo "Checking lotServer..."
+    echo -e "[${green}Info${plain}] Checking lotServer..."
     sed -i '/net.core.default_qdisc/d' /etc/sysctl.conf
     sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf
     if [[ -e /appex/bin/lotServer.sh ]]; then
-        echo -e "Uninstalling lotServer..."
+        echo -e "[${green}Info${plain}] Uninstalling lotServer..."
         wget --no-check-certificate -O appex.sh https://raw.githubusercontent.com/MoeClub/lotServer/master/Install.sh && chmod +x appex.sh && bash appex.sh uninstall
         rm -f appex.sh
     fi
-    echo "Checking lotServer complete..."
 
-    echo "Downloading bbrplus Kernel..."
+    echo -e "[${green}Info${plain}] Downloading bbrplus Kernel..."
     wget --no-check-certificate https://github.com/Yuk1n0/Shadowsocks-Install/raw/master/Centos7/x86_64/kernel-${kernel_version}.rpm
-    echo "Installing bbrplus Kernel..."
+    echo -e "[${green}Info${plain}] Installing bbrplus Kernel..."
     yum install -y kernel-${kernel_version}.rpm
+    echo -e "[${green}Info${plain}] Installing bbrplus kernel complete..."
 
     #Check
     list="$(awk -F\' '$1=="menuentry " {print i++ " : " $2}' /etc/grub2.cfg)"
     target="CentOS Linux (${kernel_version})"
     result=$(echo $list | grep "${target}")
     if [[ "$result" == "" ]]; then
-        echo "Failed to install bbrplus..."
+        echo -e "[${red}Error${plain}] Failed to install bbrplus..."
         exit 1
     fi
+    echo -e "[${green}Info${plain}] Checking lotServer complete..."
 
-    echo "Switching to new bbrplus-kernel..."
+    echo -e "[${green}Info${plain}] Switching to new bbrplus-kernel..."
     grub2-set-default 'CentOS Linux (${kernel_version}) 7 (Core)'
-    echo "Enable bbr module..."
+    echo -e "[${green}Info${plain}] Enable bbr module..."
     echo "net.core.default_qdisc=fq" >>/etc/sysctl.conf
     echo "net.ipv4.tcp_congestion_control=bbrplus" >>/etc/sysctl.conf
     rm -f kernel-${kernel_version}.rpm
@@ -254,8 +251,7 @@ install_check() {
 
 install_main() {
     if ! install_check; then
-        echo -e "[${red}Error${plain}] Your OS is not supported to run it!"
-        echo "Please change to CentOS 7 and try again."
+        echo -e "[${red}Error${plain}] Your OS is not supported to run it! Please change to CentOS 7 and try again"
         exit 1
     fi
     echo -e "[${green}Info${plain}] Press any key to start...or Press Ctrl+C to cancel"
@@ -278,10 +274,10 @@ install_main() {
         read -p "prepare installation completed，reboot server now ? [Y/n] :" answer
         [ -z "${answer}" ] && answer="y"
         if [[ $answer == [Yy] ]]; then
-            echo "Rebooting..."
+            echo -e "[${green}Info${plain}] Rebooting..."
             break
         else
-            echo "Error, you should choose [Y/n] !"
+            echo -e "[${red}Error${plain}] Please enter [Y/n] !"
             echo
         fi
     done
