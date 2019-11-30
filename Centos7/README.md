@@ -7,7 +7,7 @@
 
 一键脚本（仅CentOS）：  
 ```bash
-wget --no-check-certificate https://raw.githubusercontent.com/Yuk1n0/Shadowsocks-Install/master/bbrplus_centos.sh && chmod +x bbrplus_centos.sh && ./bbrplus_centos.sh
+wget --no-check-certificate https://raw.githubusercontent.com/Yuk1n0/Shadowsocks-Install/master/bbrplus-centos.sh && chmod +x bbrplus-centos.sh && ./bbrplus-centos.sh
 ```
 安装后，执行uname -r，显示4.14.154则切换内核成功  
 执行lsmod | grep bbr，显示有tcp_bbrplus则开启成功   
