@@ -18,7 +18,7 @@ yellow='\033[0;33m'
 plain='\033[0m'
 kernel_version="4.19.154"
 
-[[ $EUID -ne 0 ]] && echo -e "[${red}Error${plain}] This script must be run as root!" && exit 1
+[[ $EUID -ne 0 ]] && echo -e "[${red}Warning${plain}] This script must be run as root!" && exit 0
 
 disable_selinux() {
     echo -e "[${yellow}Step${plain}] This step will make SELinux disabled (if SELinux existed)..."
@@ -212,6 +212,7 @@ install_bbrplus() {
         echo -e "[${green}Info${plain}] Uninstalling lotServer..."
         wget --no-check-certificate -O appex.sh https://raw.githubusercontent.com/MoeClub/lotServer/master/Install.sh && chmod +x appex.sh && bash appex.sh uninstall
         rm -f appex.sh
+        echo -e "[${green}Info${plain}] Uninstalling lotServer complete..."
     fi
 
     echo -e "[${green}Info${plain}] Downloading bbrplus Kernel..."
@@ -268,7 +269,7 @@ install_main() {
     disable_unuseful_services
     config_firewall
     prepare_domain
-    echo "alias netports='sudo netstat -anp | grep -E \"Recv-Q|tcp|udp|raw\"'" >>/root/.bashrc
+    echo "alias netports='netstat -anp | grep -E \"Recv-Q|tcp|udp|raw\"'" >>/root/.bashrc
 
     while true; do
         read -p "prepare installation completed，reboot server now ? [Y/n] :" answer
