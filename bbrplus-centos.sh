@@ -31,8 +31,10 @@ echo -e "[${green}Info${plain}] Checking lotServer comlete..."
 
 echo -e "[${green}Info${plain}] Downloading bbrplus kernel..."
 wget --no-check-certificate https://github.com/Yuk1n0/Shadowsocks-Install/raw/master/Centos7/x86_64/kernel-${kernel_version}.rpm
+wget --no-check-certificate https://github.com/Yuk1n0/shadowsocks-Install/raw/master/Centos7/x86_64/kernel-headers-${kernel_version}.rpm
 echo -e "[${green}Info${plain}] Installing bbrplus kernel..."
-yum install -y kernel-${kernel_version}.rpm
+yum install -y kernel-${kernel_version}.rpm kernel-headers-${kernel_version}.rpm
+echo -e "[${green}Info${plain}] Installing bbrplus kernel complete..."
 
 #Check
 list="$(awk -F\' '$1=="menuentry " {print i++ " : " $2}' /etc/grub2.cfg)"
@@ -50,6 +52,7 @@ echo -e "[${green}Info${plain}] Enable bbr module..."
 echo "net.core.default_qdisc=fq" >>/etc/sysctl.conf
 echo "net.ipv4.tcp_congestion_control=bbrplus" >>/etc/sysctl.conf
 rm -f kernel-${kernel_version}.rpm
+rm -f kernel-headers-${kernel_version}.rpm
 
 while true; do
 	read -p "bbrplus installation completed，reboot server now ? [Y/n] :" answer

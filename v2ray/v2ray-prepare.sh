@@ -217,8 +217,9 @@ install_bbrplus() {
 
     echo -e "[${green}Info${plain}] Downloading bbrplus Kernel..."
     wget --no-check-certificate https://github.com/Yuk1n0/Shadowsocks-Install/raw/master/Centos7/x86_64/kernel-${kernel_version}.rpm
+    wget --no-check-certificate https://github.com/Yuk1n0/Shadowsocks-Install/raw/master/Centos7/x86_64/kernel-headers-${kernel_version}.rpm
     echo -e "[${green}Info${plain}] Installing bbrplus Kernel..."
-    yum install -y kernel-${kernel_version}.rpm
+    yum install -y kernel-${kernel_version}.rpm kernel-headers-${kernel_version}.rpm
     echo -e "[${green}Info${plain}] Installing bbrplus kernel complete..."
 
     #Check
@@ -237,6 +238,7 @@ install_bbrplus() {
     echo "net.core.default_qdisc=fq" >>/etc/sysctl.conf
     echo "net.ipv4.tcp_congestion_control=bbrplus" >>/etc/sysctl.conf
     rm -f kernel-${kernel_version}.rpm
+    rm -f kernel-headers-${kernel_version}.rpm
 }
 
 install_check() {
