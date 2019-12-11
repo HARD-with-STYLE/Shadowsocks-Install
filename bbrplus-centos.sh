@@ -7,7 +7,7 @@ red='\033[0;31m'
 green='\033[0;32m'
 yellow='\033[0;33m'
 plain='\033[0m'
-kernel_version="4.14.154"
+kernel_version="4.14.158"
 
 if [[ ! -f /etc/redhat-release ]]; then
 	echo -e "[${red}Error${plain}] Only support Centos..."
@@ -33,8 +33,8 @@ echo -e "[${green}Info${plain}] Downloading bbrplus kernel..."
 wget --no-check-certificate https://github.com/Yuk1n0/Shadowsocks-Install/raw/master/Centos7/x86_64/kernel-${kernel_version}.rpm
 wget --no-check-certificate https://github.com/Yuk1n0/shadowsocks-Install/raw/master/Centos7/x86_64/kernel-headers-${kernel_version}.rpm
 echo -e "[${green}Info${plain}] Installing bbrplus kernel..."
-yum install -y kernel-${kernel_version}.rpm kernel-headers-${kernel_version}.rpm
-echo -e "[${green}Info${plain}] Installing bbrplus kernel complete..."
+yum install -y kernel-headers-${kernel_version}.rpm
+yum install -y kernel-${kernel_version}.rpm 
 
 #Check
 list="$(awk -F\' '$1=="menuentry " {print i++ " : " $2}' /etc/grub2.cfg)"
@@ -55,13 +55,13 @@ rm -f kernel-${kernel_version}.rpm
 rm -f kernel-headers-${kernel_version}.rpm
 
 while true; do
-	read -p "bbrplus installation completed，reboot server now ? [Y/n] :" answer
+	read -p "bbrplus installation completed，reboot server now ? [Y/y] :" answer
 	[ -z "${answer}" ] && answer="y"
 	if [[ $answer == [Yy] ]]; then
 		echo -e "[${green}Info${plain}] Rebooting..."
 		break
 	else
-		echo -e "[${red}Error${plain}] Please enter [Y/n] !"
+		echo -e "[${red}Error${plain}] Please enter [Y/y] !"
 		echo
 	fi
 done

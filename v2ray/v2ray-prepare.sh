@@ -16,7 +16,7 @@ red='\033[0;31m'
 green='\033[0;32m'
 yellow='\033[0;33m'
 plain='\033[0m'
-kernel_version="4.19.154"
+kernel_version="4.14.158"
 
 [[ $EUID -ne 0 ]] && echo -e "[${red}Warning${plain}] This script must be run as root!" && exit 0
 
@@ -219,7 +219,8 @@ install_bbrplus() {
     wget --no-check-certificate https://github.com/Yuk1n0/Shadowsocks-Install/raw/master/Centos7/x86_64/kernel-${kernel_version}.rpm
     wget --no-check-certificate https://github.com/Yuk1n0/Shadowsocks-Install/raw/master/Centos7/x86_64/kernel-headers-${kernel_version}.rpm
     echo -e "[${green}Info${plain}] Installing bbrplus Kernel..."
-    yum install -y kernel-${kernel_version}.rpm kernel-headers-${kernel_version}.rpm
+    yum install -y kernel-headers-${kernel_version}.rpm
+    yum install -y kernel-${kernel_version}.rpm
     echo -e "[${green}Info${plain}] Installing bbrplus kernel complete..."
 
     #Check
